@@ -1,0 +1,111 @@
+:root{ --bg1:#ffecd2; --bg2:#fcb69f; --brand:#ff3e87; --brand2:#6c5ce7; --ok:#00d68f; --ng:#ff5a79; --ink:#2d2a32;}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:"Segoe UI","Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;color:var(--ink)}
+body{background:linear-gradient(135deg,var(--bg1),var(--bg2));overflow-x:hidden}
+
+.bg-anim{position:fixed;inset:0;pointer-events:none;background:
+radial-gradient(1200px 1200px at -10% -10%, rgba(255,255,255,.25), transparent 60%),
+radial-gradient(900px 900px at 110% 110%, rgba(255,255,255,.2), transparent 60%);
+animation:floatbg 12s infinite alternate ease-in-out; z-index:-1}
+@keyframes floatbg{from{filter:hue-rotate(0)} to{filter:hue-rotate(40deg)}}
+
+.app{max-width:960px;margin:24px auto;padding:16px 16px 40px;background:rgba(255,255,255,.6);backdrop-filter:blur(10px);border-radius:24px;box-shadow:0 10px 40px rgba(0,0,0,.15)}
+.header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.header h1{font-size:clamp(22px,4vw,36px);margin:0;color:var(--brand2);text-shadow:0 2px 0 rgba(255,255,255,.7)}
+.status{font-weight:700;display:flex;gap:14px}
+
+.screen.hidden{display:none}
+
+/* home */
+.card{background:linear-gradient(135deg,#fff,#f6f6ff);border-radius:28px;padding:18px;margin:8px 0 16px;box-shadow:0 12px 24px rgba(0,0,0,.12),inset 0 2px 6px rgba(0,0,0,.03)}
+.home-card h2{margin:6px 0 16px}
+.group{margin:14px 0}
+.group .label{font-weight:800;margin:0 0 8px}
+.seg{display:flex;gap:10px;flex-wrap:wrap}
+.seg-btn{padding:12px 16px;border-radius:14px;border:none;cursor:pointer;font-size:18px;background:linear-gradient(180deg,#ffffff,#f4f4ff);box-shadow:0 6px 12px rgba(0,0,0,.12)}
+.seg-btn.active{outline:4px solid #a7f0c1;background:linear-gradient(180deg,#eafff7,#c7ffe9)}
+.actions{margin-top:18px;display:flex;flex-direction:column;gap:8px}
+.note{opacity:.7}
+
+/* quiz */
+.flag-card{position:relative;background:linear-gradient(135deg,#ffffff,#f6f6ff);border-radius:28px;padding:18px;margin:8px 0 16px;box-shadow:0 12px 24px rgba(0,0,0,.12), inset 0 2px 6px rgba(0,0,0,.03)}
+.flag{width:min(90%,560px);height:min(52vw,340px);margin:0 auto;border-radius:18px;background:#eee;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 10px #fff, 0 8px 16px rgba(0,0,0,.1);overflow:hidden;transition:transform .4s ease}
+.flag.jump{animation:flagJump .9s ease}
+@keyframes flagJump{
+  0%{transform:translateY(0) scale(1)}
+  25%{transform:translateY(-18px) scale(1.02)}
+  50%{transform:translateY(0) scale(1)}
+  75%{transform:translateY(-8px) scale(1.01)}
+  100%{transform:translateY(0)}
+}
+
+.sparkle{position:absolute;inset:-10px;pointer-events:none;background-image:
+radial-gradient(#ffd166 2px, transparent 3px),
+radial-gradient(#a0e9ff 2px, transparent 3px),
+radial-gradient(#b9fbc0 2px, transparent 3px);
+background-size:120px 120px,140px 140px,160px 160px;background-position:0 0, 40px 20px, 20px 60px;mix-blend-mode:screen;opacity:.2;animation:twinkle 6s linear infinite}
+@keyframes twinkle{to{background-position:120px 120px, 180px 160px, 160px 200px}}
+
+.choices{display:grid;grid-template-columns:1fr;gap:14px;margin:12px 0}
+@media (min-width:700px){.choices{grid-template-columns:1fr 1fr}}
+.btn{font-size:clamp(18px,3.5vw,24px);padding:18px 20px;border-radius:18px;border:none;cursor:pointer;background:linear-gradient(180deg,#ffffff,#f4f4ff);box-shadow:0 8px 16px rgba(0,0,0,.12), inset 0 2px 2px rgba(255,255,255,.8);transition:transform .1s ease, box-shadow .2s ease, filter .2s ease}
+.btn:active{transform:translateY(2px);box-shadow:0 4px 10px rgba(0,0,0,.16)}
+.choice{display:flex;align-items:center;justify-content:center}
+.choice.correct{background:linear-gradient(180deg,#eafff7,#c7ffe9);outline:4px solid var(--ok)}
+.choice.wrong{background:linear-gradient(180deg,#fff0f3,#ffd6dd);outline:4px solid var(--ng)}
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between;margin-top:6px}
+.next{background:linear-gradient(180deg,#ffd1e6,#ff9fd0);color:#4a1a36;font-weight:800}
+.next:disabled{filter:grayscale(.6) brightness(.9);cursor:not-allowed}
+.ghost{background:#fff8; font-weight:700}
+
+.switch{display:inline-flex;align-items:center;gap:10px}
+.switch .slider{width:52px;height:28px;border-radius:28px;background:#ddd;position:relative;display:inline-block;vertical-align:middle;box-shadow:inset 0 2px 6px rgba(0,0,0,.2)}
+.switch input{display:none}
+.switch input:checked + .slider{background:linear-gradient(90deg,#8bd3ff,#a7f0c1)}
+.switch .slider::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.2);transition:left .2s ease}
+.switch input:checked + .slider::after{left:27px}
+.switch .label{font-weight:700}
+
+.footer{margin-top:20px;text-align:center;opacity:.8}
+
+/* ====== FX overlay ====== */
+.fx{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.fx .burst{position:absolute;font-size:min(18vw,160px);opacity:0;transform:scale(.6);filter:drop-shadow(0 8px 16px rgba(0,0,0,.2))}
+.fx .burst.show{animation:popIn .8s ease forwards}
+@keyframes popIn{0%{opacity:0;transform:scale(.6) rotate(-8deg)}50%{opacity:1;transform:scale(1.1)}100%{opacity:0;transform:scale(1)}}
+
+/* smile + rainbow */
+.fx .smile{font-size:min(22vw,200px); animation:smileJump 1s ease forwards; opacity:.95}
+@keyframes smileJump{
+  0%{transform:translateY(10px) scale(.9); opacity:0}
+  30%{transform:translateY(-20px) scale(1.05); opacity:1}
+  60%{transform:translateY(0) scale(1)}
+  100%{opacity:0}
+}
+.fx .rainbow{position:absolute;width:80%;max-width:560px;aspect-ratio:1/1;border-radius:50%;
+  background:conic-gradient(#ff3e87, #ffcd3c, #34d399, #60a5fa, #a78bfa, #ff3e87);
+  -webkit-mask:radial-gradient(circle at center, transparent 58%, #000 59%);
+  mask:radial-gradient(circle at center, transparent 58%, #000 59%);
+  opacity:.9; animation:rainbowSpin 1.2s ease-out forwards
+}
+@keyframes rainbowSpin{
+  0%{transform:rotate(-40deg) scale(.8); opacity:0}
+  40%{opacity:1}
+  100%{transform:rotate(10deg) scale(1); opacity:0}
+}
+
+/* cute cross for wrong */
+.fx .cross{width:140px;height:140px;border-radius:50%;background:radial-gradient(#ffd6dd,#ffc3cf);
+  box-shadow:0 10px 24px rgba(255,90,121,.35); display:flex;align-items:center;justify-content:center;
+  animation:crossPop .9s ease; opacity:.95}
+.fx .cross::before,.fx .cross::after{
+  content:"";position:absolute;width:14px;height:80px;border-radius:10px;background:#ff5a79
+}
+.fx .cross::before{transform:rotate(45deg)}
+.fx .cross::after{transform:rotate(-45deg)}
+@keyframes crossPop{
+  0%{transform:scale(.6) rotate(-10deg);opacity:0}
+  30%{transform:scale(1.05) rotate(6deg);opacity:1}
+  60%{transform:scale(1)}
+  100%{opacity:0}
+}
