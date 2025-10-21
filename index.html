@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>はたクイズ（ようじむけ）</title>
+<style>
+  :root{--bg:#f7f7fb;--panel:#fff;--ink:#1f2937;--muted:#6b7280;--accent:#4f86ff;--good:#16a34a;--bad:#e11d48}
+  *{box-sizing:border-box} html,body{height:100%}
+  body{margin:0;font-family:"Noto Sans JP",system-ui,sans-serif;background:var(--bg);color:var(--ink);display:flex;align-items:center;justify-content:center;padding:16px}
+  .app{width:min(900px,100%);background:var(--panel);border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.08);padding:18px}
+  .header{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+  .title{font-weight:800;font-size:clamp(22px,4vw,28px)}
+  .tag{background:linear-gradient(135deg,var(--accent),#7aa8ff);color:#fff;font-size:12px;border-radius:999px;padding:4px 10px}
+  .controls{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+  .btn{appearance:none;border:0;padding:10px 14px;border-radius:14px;background:#eef2ff;font-weight:700;cursor:pointer}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),#7aa8ff);color:#fff}
+  .btn.good{background:linear-gradient(135deg,var(--good),#22c55e);color:#fff}
+  .row{display:grid;gap:16px}
+  @media(min-width:760px){.row{grid-template-columns:1.1fr .9fr}}
+  .flagCard{border:2px solid #eef;border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center}
+  .q{font-size:clamp(22px,4vw,28px);font-weight:800;text-align:center}
+  .flagWrap{width:min(560px,95%);aspect-ratio:4/3;border-radius:16px;background:#f0f4ff;display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:inset 0 0 0 10px #fff,0 8px 18px rgba(0,0,0,.08)}
+  .choices{display:grid;gap:12px}
+  @media(min-width:760px){.choices{grid-template-columns:1fr 1fr}}
+  .choice{font-size:clamp(22px,3.6vw,28px);padding:16px 18px;border-radius:16px;background:#fff;border:2px solid #e6e8f5;cursor:pointer;text-align:center;box-shadow:0 4px 10px rgba(0,0,0,.05)}
+  .choice.correct{border-color:#bde8ca;background:#f2fbf5}
+  .choice.wrong{border-color:#ffd1db;background:#fff5f7}
+  .result{font-size:clamp(22px,4vw,28px);font-weight:900;text-align:center}
+  .ok{color:var(--good)} .ng{color:var(--bad)}
+  .pill{padding:8px 12px;background:#f5f6ff;border-radius:999px;font-size:14px}
+</style>
+</head>
+<body>
+  <div class="app" role="application" aria-label="はたクイズ">
+    <div class="header">
+      <div class="title">はたクイズ <span class="tag">ようじ むけ</span></div>
+      <div class="controls">
+        <button class="btn" id="modeBtn" aria-pressed="true">やさしい</button>
+        <button class="btn" id="soundBtn" aria-pressed="true">おと：ON</button>
+        <button class="btn" id="fullBtn">全画面</button>
+        <button class="btn primary" id="resetBtn">はじめから</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="flagCard">
+        <div class="q" id="qText">この はたは どこの くに？</div>
+        <div class="flagWrap" id="flagWrap" aria-live="polite"></div>
+        <div class="result" id="result"></div>
+        <div class="pill"><span style="color:#6b7280">のこり：</span><strong><span id="left">10</span> もん</strong>　
+          <span style="color:#6b7280">せいかい：</span><strong><span id="score">0</span></strong>
+        </div>
+        <button class="btn good" id="nextBtn" style="display:none">つぎへ ▶</button>
+      </div>
+      <div class="choices" id="choices" aria-label="こたえ を えらんでね"></div>
+    </div>
+  </div>
+
+<script>
+/* 旗データ（幼児向け：ひらがな表記） */
+const FLAGS = [
+  {code:'JP', name:'にほん'},
+  {code:'FR', name:'ふらんす'},
+  {code:'DE', name:'どいつ'},
+  {code:'IT', name:'いたりあ'},
+  {code:'SE', name:'すうぇーでん'},
+  {code:'DK', name:'でんまーく'},
+  {code:'NO', name:'のるうぇー'},
+  {code:'UA', name:'うくらいな'},
+  {code:'PL', name:'ぽーらんど'},
+  {code:'AT', name:'おーすとりあ'}
+];
+
+/* SVGで旗を描く（画像ファイル不要） */
+function flagSVG(code, w=640, h=480){
+  const S = [], R=(x,y,w,h,c)=>S.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"/>`);
+  const C=(cx,cy,r,c)=>S.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}"/>`);
+  S.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" role="img" aria-label="flag ${code}">`);
+  R(0,0,w,h,'#fff');
+  const tW=w/3,tH=h/3,hH=h/2; // thirds/half
+  switch(code){
+    case 'JP': C(w/2,h/2, Math.min(w,h)*0.22, '#bc002d'); break;
+    case 'FR': R(0,0,tW,h,'#0055a4'); R(tW,0,tW,h,'#fff'); R(tW*2,0,tW,h,'#ef4135'); break;
+    case 'DE': R(0,0,w,tH,'#000'); R(0,tH,w,tH,'#dd0000'); R(0,tH*2,w,tH,'#ffce00'); break;
+    case 'IT': R(0,0,tW,h,'#009246'); R(tW,0,tW,h,'#fff'); R(tW*2,0,tW,h,'#ce2b37'); break;
+    case 'SE': R(0,0,w,h,'#006aa7'); R(0,h*0.42,w,h*0.16,'#fecc02'); R(w*0.34,0,w*0.16,h,'#fecc02'); break;
+    case 'DK': R(0,0,w,h,'#c60c30'); R(0,h*0.46,w,h*0.12,'#fff'); R(w*0.34,0,w*0.12,h,'#fff'); break;
+    case 'NO': R(0,0,w,h,'#ba0c2f'); R(0,h*0.44,w,h*0.12,'#fff'); R(w*0.31,0,w*0.12,h,'#fff');
+               R(0,h*0.47,w,h*0.06,'#00205b'); R(w*0.345,0,w*0.06,h,'#00205b'); break;
+    case 'UA': R(0,0,w,hH,'#005bbb'); R(0,hH,w,hH,'#ffd500'); break;
+    case 'PL': R(0,0,w,hH,'#fff'); R(0,hH,w,hH,'#dc143c'); break;
+    case 'AT': R(0,0,w,tH,'#ed2939'); R(0,tH,w,tH,'#fff'); R(0,tH*2,w,tH,'#ed2939'); break;
+    default: R(0,0,w,h,'#ddd'); break;
+  }
+  S.push(`</svg>`); return S.join('');
+}
+
+/* ゲーム状態 */
+const el = {
+  flag: document.getElementById('flagWrap'),
+  choices: document.getElementById('choices'),
+  result: document.getElementById('result'),
+  left: document.getElementById('left'),
+  score: document.getElementById('score'),
+  next: document.getElementById('nextBtn'),
+  mode: document.getElementById('modeBtn'),
+  sound: document.getElementById('soundBtn'),
+  reset: document.getElementById('resetBtn'),
+  full: document.getElementById('fullBtn')
+};
+let state = { pool: shuffle([...FLAGS]), idx:0, correct:0, answered:false, easy:true, sound:true };
+
+/* 小さな効果音 */
+let AC=null;
+function beep(ok=true){
+  if(!state.sound) return;
+  try{
+    if(!AC) AC=new (window.AudioContext||window.webkitAudioContext)();
+    const o=AC.createOscillator(), g=AC.createGain();
+    o.type= ok?'triangle':'sawtooth'; o.frequency.value= ok?880:220;
+    g.gain.setValueAtTime(0.0001, AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(ok?0.12:0.18, AC.currentTime+0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, AC.currentTime+(ok?0.25:0.35));
+    o.connect(g).connect(AC.destination); o.start(); o.stop(AC.currentTime+(ok?0.26:0.36));
+  }catch(e){}
+}
+
+/* ユーティリティ */
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function sampleWrong(correct,n){const others=FLAGS.filter(f=>f.code!==correct.code);return shuffle(others).slice(0,n)}
+
+/* 描画 */
+function render(){
+  const total = state.pool.length, left = total - state.idx;
+  el.left.textContent = left; el.score.textContent = state.correct;
+  el.result.textContent=''; el.next.style.display='none';
+
+  if(state.idx>=total){
+    el.flag.innerHTML = `<div style="font-size:clamp(26px,4.5vw,32px);text-align:center">🎉 さいごまで できたよ！</div>`;
+    el.choices.innerHTML = `<button class="btn primary" onclick="resetGame()">もういっかい！</button>`;
+    return;
+  }
+
+  const q = state.pool[state.idx];
+  el.flag.innerHTML = flagSVG(q.code);
+
+  // 選択肢（やさしい=2択 / ふつう=3択）
+  const num = state.easy? 2 : 3;
+  const options = shuffle([q, ...sampleWrong(q, num-1)]);
+  el.choices.innerHTML = '';
+  options.forEach(opt=>{
+    const b=document.createElement('button');
+    b.className='choice'; b.textContent=opt.name;
+    b.onclick=()=>{
+      if(state.answered) return;
+      state.answered=true;
+      const correct = (opt.code===q.code);
+      if(correct){
+        b.classList.add('correct'); el.result.textContent='✅ せいかい！'; el.result.className='result ok';
+        state.correct++; beep(true);
+      }else{
+        b.classList.add('wrong'); el.result.textContent='❌ ざんねん…'; el.result.className='result ng';
+        beep(false);
+        [...el.choices.children].forEach(ch=>{ if(ch.textContent===q.name) ch.classList.add('correct') });
+      }
+      el.next.style.display='inline-block';
+    };
+    el.choices.appendChild(b);
+  });
+}
+function nextQ(){ if(!state.answered) return; state.idx++; state.answered=false; render(); }
+function resetGame(){ state.pool=shuffle([...FLAGS]); state.idx=0; state.correct=0; state.answered=false; render(); }
+
+/* ボタン操作 */
+el.next.addEventListener('click', nextQ);
+el.reset.addEventListener('click', resetGame);
+el.mode.addEventListener('click', ()=>{ state.easy=!state.easy; el.mode.textContent= state.easy?'やさしい':'ふつう'; });
+el.sound.addEventListener('click', ()=>{ state.sound=!state.sound; el.sound.textContent='おと：'+(state.sound?'ON':'OFF'); el.sound.setAttribute('aria-pressed',String(state.sound)); });
+el.full.addEventListener('click', ()=>{ const r=document.documentElement; if(!document.fullscreenElement) r.requestFullscreen?.(); else document.exitFullscreen?.(); });
+
+/* 初期表示 */
+resetGame();
+</script>
+</body>
+</html>
